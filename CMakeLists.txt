@@ -9,14 +9,13 @@ add_definitions(-std=c++17)
 set(CMAKE_CXX_FLAGS "${CMAXE_CXX_FLAGS} -g -Wall")
 
 add_subdirectory(lib/collector)
-add_subdirectory(lib/network)
 add_subdirectory(lib/utils)
 
 add_executable(stat_server app/server.cpp)
 add_executable(stat_client app/client.cpp)
 
-target_link_libraries(stat_client PUBLIC collector network utils)
-target_link_libraries(stat_server PUBLIC network)
+target_link_libraries(stat_client PUBLIC collector utils)
+target_link_libraries(stat_server PUBLIC)
 
 #tests
 set(GMOCK_PATH /home/gregor85/Programming/libs/gmock-1.7.0)

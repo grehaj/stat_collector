@@ -1,12 +1,19 @@
-#include "network/SocketConsts.h"
-#include "network/UnixStreamClient.h"
+#include "Collector.h"
+
+#include <cstdlib>
 #include <iostream>
+
+using namespace collector;
 
 using namespace std;
 
-int main(int argv, char* argc[])
+int main(int argv, char* argc[]) try
 {
-    network::UnixStreamClient client{network::UNIX_SOCKET_PATH};
-    client.run();
-    return 0;
+    collector::Collector{"wlp2s0", 3, 10, "whatever"}.run();
+    std::exit(EXIT_SUCCESS);
+}
+catch (const std::exception& e)
+{
+    std::cerr << e.what() << std::endl;
+    std::exit(EXIT_FAILURE);
 }

@@ -17,5 +17,8 @@ public:
                    bool& finished, std::exception_ptr& err);
 
    void run(ThreadArg threadArg) override;
+
+private:
+   int writer_socket{-1};
 };
 }

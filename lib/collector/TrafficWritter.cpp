@@ -1,45 +1,54 @@
 #include "TrafficWritter.h"
 
-#include <cstdio>
-#include <filesystem>
-#include <fstream>
+#include <iostream>
 #include <string>
+#include <sstream>
+
+#include <sys/un.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 namespace collector
 {
-namespace fs = std::filesystem;
-
-std::string get_file_name(int num, const std::string& directory)
-{
-    char buffer[100]{};
-    if(not directory.empty())
-    {
-        fs::path target_path = fs::path{directory} / utils::LOG_TEMPLATE;
-        sprintf(buffer, target_path.c_str(), num);
-    }
-    else
-        sprintf(buffer, utils::DEFAULT_LOG_LOCATION.c_str(), num);
-
-    return std::string{buffer};
-}
 
 TrafficWritter::TrafficWritter(TrafficStorage& ts, std::mutex& m, std::condition_variable& cv,
                                bool& finished, std::exception_ptr& error):
-    CollectorThread{ts, m, cv, finished, error}
+    CollectorThread{ts, m, cv, finished, error}, writer_socket{socket(AF_UNIX, SOCK_STREAM, 0)}
 {
+    if(writer_socket == -1)
+    {
+        throw std::runtime_error{"writer - socket"};
+    }
 }
 
 void TrafficWritter::run(ThreadArg threadArg)
 {
+    sockaddr_un add{};
+    add.sun_family = AF_UNIX;
+    std::copy(std::begin(COLLECTOR_SOCKET_PTH), std::end(COLLECTOR_SOCKET_PTH), std::begin(add.sun_path));
+    if(::connect(writer_socket, reinterpret_cast<sockaddr*>(&add), sizeof (sockaddr_un)) == -1)
+    {
+        throw std::runtime_error{"writer - connect"};
+    }
     file_count_t file_num = 1;
-    fs::path file_path = fs::path{get_file_name(file_num, threadArg.directory)};
 
     while(true)
     {
         std::unique_lock<std::mutex> ul{storage_mtx};
         ready_to_write.wait(ul, [&]{return traffic_storage.size() == threadArg.storage_size;});
-        std::ofstream out{file_path.string()};
+        std::stringstream out{};
         out << traffic_storage;
+        std::string line;
+        while(std::getline(out, line))
+        {
+            line = line += '\n';
+            const auto msg_size = line.length();
+            if(write(writer_socket, line.c_str(), msg_size) != msg_size)
+            {
+                throw std::runtime_error{"writer - write"};
+            }
+        }
+
         traffic_storage.clear();
         ++file_num;
         if(file_num > threadArg.file_count)
@@ -47,7 +56,6 @@ void TrafficWritter::run(ThreadArg threadArg)
             finished = true;
             return;
         }
-        file_path = fs::path{get_file_name(file_num, threadArg.directory)};
     }
 }
 }
