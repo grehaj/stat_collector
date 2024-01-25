@@ -12,8 +12,7 @@
 
 namespace collector
 {
-namespace utils
-{
+
 bool port_t::operator<(const port_t& r) const
 {
     return port < r.port;
@@ -96,6 +95,5 @@ std::string to_string(time_t t)
     buffer << std::put_time(loct, "%c");
 
     return buffer.str();
-}
 }
 }

@@ -51,7 +51,7 @@ std::ostream& operator<<(std::ostream& out, const TrafficStorage& ts)
     j["stat"] = ts.traffic;
     j["stat_count"] = std::accumulate(ts.traffic.begin(), ts.traffic.end(), init,
                                        [](uint64_t c, const auto& d) {return c + d.total_count.counter;});
-    j["period_start"] = utils::to_string(ts.traffic.front().observation_time);
+    j["period_start"] = to_string(ts.traffic.front().observation_time);
     j["period_length"] = ts.max_secs;
 
     return out << std::setw(2) << j << std::endl;

@@ -10,7 +10,6 @@
 
 namespace collector
 {
-using namespace utils;
 
 struct Socket
 {

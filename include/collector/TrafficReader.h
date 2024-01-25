@@ -11,7 +11,6 @@
 
 namespace collector
 {
-using namespace utils;
 
 class TrafficReader : public CollectorThread
 {

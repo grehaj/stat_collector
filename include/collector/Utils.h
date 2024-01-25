@@ -6,11 +6,8 @@
 #include <string>
 
 namespace collector
-{
-namespace utils
-{
 // TODO types
-
+{
 struct port_t
 {
     uint16_t port;
@@ -60,4 +57,4 @@ struct fifo_deleter
     }
 };
 }
-}
+

@@ -2,7 +2,6 @@
 
 namespace collector
 {
-using namespace utils;
 
 TrafficReader::TrafficReader(TrafficStorage& ts, std::mutex& m,
                              std::condition_variable& cv, bool& finished, std::exception_ptr& error):
@@ -15,12 +14,12 @@ void TrafficReader::run(ThreadArg threadArg)
     const std::string tcp_dump_command = std::string{
             "tcpdump -n -tt -i "} + threadArg.interface_name + " dst " + threadArg.interface_ip;
     using del_t = decltype (fifo_deleter<FILE>());
-    auto f = std::unique_ptr<FILE, del_t>(popen(tcp_dump_command.c_str(), "r"), utils::fifo_deleter<FILE>());
+    auto f = std::unique_ptr<FILE, del_t>(popen(tcp_dump_command.c_str(), "r"), fifo_deleter<FILE>());
     if(f == nullptr)
         throw std::runtime_error{"SystemCommand: popen - tcpdump"};
     std::smatch sm;
-    char buffer[utils::READSIZE]{};
-    while (not finished and fgets(buffer, utils::READSIZE, f.get()))
+    char buffer[READSIZE]{};
+    while (not finished and fgets(buffer, READSIZE, f.get()))
     {
         std::string s{buffer};
         if(std::regex_search(s, sm, r))

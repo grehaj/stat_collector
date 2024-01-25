@@ -9,7 +9,7 @@ using namespace std;
 
 int main(int argv, char* argc[]) try
 {
-    collector::Collector{"wlp2s0", 3, 10, "whatever"}.run();
+    collector::Collector{"wlp2s0", 1, 1}.run();
     std::exit(EXIT_SUCCESS);
 }
 catch (const std::exception& e)
