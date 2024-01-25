@@ -1,5 +1,5 @@
-#include "network/SocketUtils.h"
-#include "collector/Utils.h"
+#include "SocketUtils.h"
+#include "Utils.h"
 
 #include <algorithm>
 

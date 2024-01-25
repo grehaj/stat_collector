@@ -1,15 +1,14 @@
-#include "Collector.h"
+#include "StatClient.h"
 
 #include <cstdlib>
 #include <iostream>
-
-using namespace collector;
 
 using namespace std;
 
 int main(int argv, char* argc[]) try
 {
-    collector::Collector{"wlp2s0", 1, 1}.run();
+    network::StatClient client{};
+    client.run();
     std::exit(EXIT_SUCCESS);
 }
 catch (const std::exception& e)

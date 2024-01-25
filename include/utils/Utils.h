@@ -56,5 +56,11 @@ struct fifo_deleter
             pclose(f);
     }
 };
+
+//TODO network utils and logic to avoid overflow and client id for client identification
+struct UdpMsg
+{
+    char data[READSIZE];
+};
 }
 
