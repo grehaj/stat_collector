@@ -3,7 +3,7 @@
 
 #include <iomanip>
 
-namespace collector
+namespace client
 {
 bool Socket::operator<(const Socket& r) const
 {

@@ -1,14 +1,14 @@
 #include "JsonConversion.h"
 #include "Utils.h"
 
-namespace collector
+namespace client
 {
-void to_json(nlohmann::json& j, const port_t& port)
+void to_json(nlohmann::json& j, const utils::port_t& port)
 {
     j = nlohmann::json{{"port", port.port}};
 }
 
-void to_json(nlohmann::json& j, const ip_t& ip)
+void to_json(nlohmann::json& j, const utils::ip_t& ip)
 {
     j = nlohmann::json{{"ip", ip_to_str(ip)}};
 }
@@ -18,7 +18,7 @@ void to_json(nlohmann::json& j, const Socket& socket)
     j = nlohmann::json{{"ip", ip_to_str(socket.ip)}, {"port", socket.port.port}};
 }
 
-void to_json(nlohmann::json& j, const counter_t& c)
+void to_json(nlohmann::json& j, const utils::counter_t& c)
 {
     j = nlohmann::json{{"count", c.counter}};
 }
@@ -27,7 +27,7 @@ void to_json(nlohmann::json& j, const PortTraffic& port_traffic)
 {
     // RFC 8259 compilant json format
     j = nlohmann::json{};
-    j["time"] = to_string(port_traffic.observation_time);
+    j["time"] = utils::to_string(port_traffic.observation_time);
     j["time_count"] = port_traffic.total_count.counter;
     j["ports"] = nlohmann::json::array();
     for(const auto& [p, data] : port_traffic.amount_per_dest_port)

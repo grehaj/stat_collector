@@ -6,12 +6,12 @@
 #include <exception>
 #include <mutex>
 
-namespace collector
+namespace client
 {
 struct ThreadArg
 {
-    file_count_t file_count;
-    storage_size_t storage_size;
+    utils::file_count_t file_count;
+    utils::storage_size_t storage_size;
     std::string interface_name;
     std::string interface_ip;
 };

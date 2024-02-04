@@ -10,11 +10,11 @@
 #include <regex>
 #include <thread>
 
-namespace collector
+namespace client
 {
 namespace fs = std::filesystem;
 
-Collector::Collector(const std::string& ifc, file_count_t fc, storage_size_t s):
+Collector::Collector(const std::string& ifc, utils::file_count_t fc, utils::storage_size_t s):
     interface{ifc}, ip{get_interface_ip(ifc)}, file_count{fc}, storage_size{s},
     traffic_storage{interface, ip, storage_size}
 {
@@ -40,7 +40,7 @@ void Collector::run()
 
 std::string Collector::get_interface_ip(const std::string& ifc) const
 {
-    auto ifcs{get_active_interfaces_ip()};
+    auto ifcs{utils::get_active_interfaces_ip()};
     if(ifcs.find(ifc) == ifcs.end())
         throw std::runtime_error{"Unable to find interface '" + ifc + "'."};
 

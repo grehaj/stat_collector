@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-namespace collector
+namespace utils
 {
 
 bool port_t::operator<(const port_t& r) const

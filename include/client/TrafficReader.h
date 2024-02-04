@@ -9,7 +9,7 @@
 #include <mutex>
 #include <regex>
 
-namespace collector
+namespace client
 {
 
 class TrafficReader : public CollectorThread

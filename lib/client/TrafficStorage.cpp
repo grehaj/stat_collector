@@ -3,8 +3,11 @@
 #include <iomanip>
 #include <numeric>
 
-namespace collector
+namespace client
 {
+
+using namespace utils;
+
 TrafficStorage::TrafficStorage(const std::string& ifc, const std::string& ip, size_type s) :
     interface{ifc}, ip_addr{ip}, max_secs{s}
 {

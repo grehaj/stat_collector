@@ -7,7 +7,7 @@ using namespace std;
 
 int main(int argv, char* argc[]) try
 {
-    network::StatClient client{};
+    client::StatClient client{};
     client.run();
     std::exit(EXIT_SUCCESS);
 }

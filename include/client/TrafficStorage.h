@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <deque>
 
-namespace collector
+namespace client
 {
 class TrafficStorage
 {

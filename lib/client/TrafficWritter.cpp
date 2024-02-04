@@ -9,8 +9,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-namespace collector
+namespace client
 {
+
+using namespace utils;
 
 TrafficWritter::TrafficWritter(TrafficStorage& ts, std::mutex& m, std::condition_variable& cv,
                                bool& finished, std::exception_ptr& error):
@@ -24,7 +26,7 @@ TrafficWritter::TrafficWritter(TrafficStorage& ts, std::mutex& m, std::condition
 
 void TrafficWritter::run(ThreadArg threadArg)
 {
-    sockaddr_un add{network::get_socket_address()};
+    sockaddr_un add{get_socket_address()};
     file_count_t file_num = 1;
 
     while(true)

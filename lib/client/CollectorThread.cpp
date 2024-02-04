@@ -1,6 +1,6 @@
 #include "CollectorThread.h"
 
-namespace collector
+namespace client
 {
 CollectorThread::CollectorThread(TrafficStorage& ts, std::mutex& m, std::condition_variable& cv,
                                  bool& f, std::exception_ptr& err):

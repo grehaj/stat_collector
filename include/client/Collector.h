@@ -5,14 +5,14 @@
 #include <memory>
 #include <string>
 
-namespace collector
+namespace client
 {
 class Collector
 {
 public:
     Collector(const std::string& interface,
-              file_count_t file_count,
-              storage_size_t storage_size);
+              utils::file_count_t file_count,
+              utils::storage_size_t storage_size);
 
     void run();
 
@@ -21,8 +21,8 @@ private:
 
     const std::string interface;
     const std::string ip;
-    const file_count_t file_count;
-    const storage_size_t storage_size;
+    const utils::file_count_t file_count;
+    const utils::storage_size_t storage_size;
     const std::string directory;
 
     TrafficStorage traffic_storage;

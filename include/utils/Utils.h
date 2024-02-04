@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 
-namespace collector
+namespace utils
 // TODO types
 {
 struct port_t

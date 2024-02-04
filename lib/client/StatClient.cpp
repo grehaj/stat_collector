@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-namespace network
+namespace client
 {
 
 StatClient::StatClient()
@@ -14,7 +14,7 @@ StatClient::StatClient()
 
 void StatClient::run()
 {
-    collector::Collector{"wlp2s0", 1, 1}.run();
+    Collector{"wlp2s0", 1, 1}.run();
 }
 
 }

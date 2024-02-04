@@ -2,7 +2,7 @@
 
 #include <sys/un.h>
 
-namespace network
+namespace utils
 {
 
 sockaddr_un get_socket_address();

@@ -8,7 +8,7 @@
 #include <regex>
 #include <string>
 
-namespace collector
+namespace client
 {
 class TrafficWritter : public CollectorThread
 {

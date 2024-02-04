@@ -1,7 +1,9 @@
 #include "TrafficReader.h"
 
-namespace collector
+namespace client
 {
+
+using namespace utils;
 
 TrafficReader::TrafficReader(TrafficStorage& ts, std::mutex& m,
                              std::condition_variable& cv, bool& finished, std::exception_ptr& error):

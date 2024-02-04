@@ -1,6 +1,6 @@
 #pragma once
 
-namespace network
+namespace client
 {
 
 class StatClient

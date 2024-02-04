@@ -10,18 +10,18 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-namespace network
+namespace server
 {
 
 StatServer::StatServer() : socket_id{socket(AF_UNIX, SOCK_DGRAM, 0)}
 {
-    std::filesystem::remove(std::filesystem::path{collector::COLLECTOR_SOCKET_PTH});
+    std::filesystem::remove(std::filesystem::path{utils::COLLECTOR_SOCKET_PTH});
     if(socket_id == -1)
     {
         throw std::runtime_error{"server - socket"};
     }
 
-    auto add{get_socket_address()};
+    auto add{utils::get_socket_address()};
 
     if(bind(socket_id, reinterpret_cast<sockaddr*>(&add), sizeof (sockaddr_un)) == -1)
     {
@@ -32,11 +32,11 @@ StatServer::StatServer() : socket_id{socket(AF_UNIX, SOCK_DGRAM, 0)}
 void StatServer::run()
 {
     ssize_t bytes_read{-1};
-    char buffer[collector::READSIZE]{};
+    char buffer[utils::READSIZE]{};
     while(true)
     {
         //for udp we need a thread for each client identified by client id
-        bytes_read = recvfrom(socket_id, buffer, collector::READSIZE, 0, 0, 0);
+        bytes_read = recvfrom(socket_id, buffer, utils::READSIZE, 0, 0, 0);
         while(bytes_read == -1)
         {
             throw std::runtime_error{"server - recvfrom"};
