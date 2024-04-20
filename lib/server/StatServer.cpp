@@ -8,44 +8,82 @@
 
 #include <sys/un.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <netdb.h>
 #include <unistd.h>
 
 namespace server
 {
 
-StatServer::StatServer() : socket_id{socket(AF_UNIX, SOCK_DGRAM, 0)}
+StatServer::StatServer()
 {
-    std::filesystem::remove(std::filesystem::path{utils::COLLECTOR_SOCKET_PTH});
-    if(socket_id == -1)
+    addrinfo hints{};
+    addrinfo *result{};
+    hints.ai_canonname = NULL;
+    hints.ai_addr = NULL;
+    hints.ai_next = NULL;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = AF_UNSPEC;
+    /* Allows IPv4 or IPv6 */
+    hints.ai_flags = AI_PASSIVE | AI_NUMERICSERV;
+    /* Wildcard IP address; service name is numeric */
+    if (getaddrinfo(NULL, utils::PORT_NUM.c_str(), &hints, &result) != 0)
     {
-        throw std::runtime_error{"server - socket"};
+        throw std::runtime_error{"server - getaddrinfo"};
+    }
+    int optval{1};
+    auto rp = result;
+    for(; rp; rp = rp->ai_next)
+    {
+        socket_id = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if(socket_id == -1)
+            continue;
+
+//        if (setsockopt(socket_id, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval) == -1))
+//        {
+//            throw std::runtime_error{"server - setsockopt"};
+//        }
+
+        if (bind(socket_id, rp->ai_addr, rp->ai_addrlen) == 0)
+            break;
+
+        close(socket_id);
     }
 
-    auto add{utils::get_socket_address()};
-
-    if(bind(socket_id, reinterpret_cast<sockaddr*>(&add), sizeof (sockaddr_un)) == -1)
+    if (rp == NULL)
     {
-        throw std::runtime_error{"server - bind"};
+        throw std::runtime_error{"server - Could not bind socket to any address"};
     }
+
+    if (listen(socket_id, utils::BACKLOG) == -1)
+    {
+        throw std::runtime_error{"server - listen"};
+    }
+
+    freeaddrinfo(result);
 }
 
 void StatServer::run()
 {
-    ssize_t bytes_read{-1};
     char buffer[utils::READSIZE]{};
+    sockaddr_storage claddr;
     while(true)
     {
-        //for udp we need a thread for each client identified by client id
-        bytes_read = recvfrom(socket_id, buffer, utils::READSIZE, 0, 0, 0);
-        while(bytes_read == -1)
+        socklen_t addrlen = sizeof(sockaddr_storage);
+        auto cfd = accept(socket_id, (struct sockaddr *) &claddr, &addrlen);
+        if (cfd == -1)
         {
-            throw std::runtime_error{"server - recvfrom"};
+            continue;
+        }
+
+        if(utils::readLine(cfd, buffer, utils::READSIZE) <= 0)
+        {
+            continue;
         }
 
         std::cout << buffer << std::endl;
         std::fill(std::begin(buffer), std::end(buffer), 0);
-
-        // TODO need a suprt for multiple clients sending data
+        close(cfd);
     }
 }
 

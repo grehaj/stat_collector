@@ -1,11 +1,11 @@
 #pragma once
 
-#include <sys/un.h>
+#include <netinet/in.h>
 
 namespace utils
 {
 
-sockaddr_un get_socket_address();
+sockaddr_in get_socket_address();
 
 }
 

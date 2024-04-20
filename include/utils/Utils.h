@@ -31,9 +31,11 @@ using storage_size_t = uint8_t;
 
 
 // TODO consts
+constexpr int BACKLOG{5};
 constexpr int READSIZE{1024};
 constexpr storage_size_t MAX_STORAGE_SIZE{60};
 constexpr file_count_t MAX_FILE_COUNT{60};
+const std::string PORT_NUM = "50030";
 const std::string COLLECTOR_SOCKET_PTH{"/tmp/collector_socket"};
 
 
@@ -56,6 +58,8 @@ struct fifo_deleter
             pclose(f);
     }
 };
+
+ssize_t readLine(int fd, void *buffer, size_t n);
 
 //TODO network utils and logic to avoid overflow and client id for client identification
 struct UdpMsg
