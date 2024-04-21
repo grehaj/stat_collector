@@ -1,11 +1,12 @@
 #pragma once
 
 #include <netinet/in.h>
+#include <string>
 
 namespace utils
 {
 
-sockaddr_in get_socket_address();
+std::string readLine(int fd);
 
 }
 

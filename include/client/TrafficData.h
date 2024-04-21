@@ -2,45 +2,15 @@
 
 #include "Utils.h"
 #include <ctime>
-#include <cstdint>
-#include <deque>
-#include <map>
-#include <ostream>
-#include <string>
 
 namespace client
 {
-
-struct Socket
+struct TrafficData
 {
-    utils::ip_t ip;
-    utils::port_t port;
-
-    bool operator<(const Socket& r) const;
+    time_t t;
+    utils::ip_t src_ip;
+    utils::port_t src_port;
+    utils::ip_t dst_ip;
+    utils::port_t dst_port;
 };
-
-struct Connection
-{
-    Socket src;
-    Socket dst;
-};
-
-std::ostream& operator<<(std::ostream& out, const Connection& s);
-
-struct SocketTraffic
-{
-    std::map<Socket, utils::counter_t> per_socket_count;
-    utils::counter_t total_count;
-};
-
-struct PortTraffic
-{
-    time_t observation_time;
-    std::map<utils::port_t, SocketTraffic> amount_per_dest_port{};
-    utils::counter_t total_count;
-
-    PortTraffic& operator+=(const Connection& pt);
-};
-
-using traffic_t = std::deque<PortTraffic>;
 }

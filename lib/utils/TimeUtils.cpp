@@ -1,6 +1,8 @@
 #include "utils/TimeUtils.h"
 
+#include <iomanip>
 #include <stdexcept>
+#include <sstream>
 
 namespace utils
 {
@@ -20,5 +22,14 @@ std::string get_ctime()
         throw std::runtime_error{"get_ctime - ctime returned nullptr"};
 
     return std::string{c_time};
+}
+
+std::string to_string(time_t t)
+{
+    auto loct{std::localtime(&t)};
+    std::ostringstream buffer;
+    buffer << std::put_time(loct, "%c");
+
+    return buffer.str();
 }
 }

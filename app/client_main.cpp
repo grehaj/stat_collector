@@ -7,7 +7,7 @@ using namespace std;
 
 int main(int argv, char* argc[]) try
 {
-    client::StatClient client{};
+    client::StatClient client{"wlp2s0", 1, 1};
     client.run();
     std::exit(EXIT_SUCCESS);
 }

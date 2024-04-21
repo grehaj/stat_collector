@@ -1,4 +1,5 @@
 #include "server/StatServer.h"
+#include "Consts.h"
 #include "utils/Utils.h"
 #include "utils/SocketUtils.h"
 
@@ -31,7 +32,6 @@ StatServer::StatServer()
     {
         throw std::runtime_error{"server - getaddrinfo"};
     }
-    int optval{1};
     auto rp = result;
     for(; rp; rp = rp->ai_next)
     {
@@ -65,7 +65,6 @@ StatServer::StatServer()
 
 void StatServer::run()
 {
-    char buffer[utils::READSIZE]{};
     sockaddr_storage claddr;
     while(true)
     {
@@ -73,16 +72,21 @@ void StatServer::run()
         auto cfd = accept(socket_id, (struct sockaddr *) &claddr, &addrlen);
         if (cfd == -1)
         {
+            std::cout << strerror(errno) << std::endl;
             continue;
         }
-
-        if(utils::readLine(cfd, buffer, utils::READSIZE) <= 0)
+        auto msg = utils::readLine(cfd);
+        while(!msg.empty())
         {
-            continue;
-        }
+            if(msg.empty())
+            {
+                std::cout << strerror(errno) << std::endl;
+                continue;
+            }
 
-        std::cout << buffer << std::endl;
-        std::fill(std::begin(buffer), std::end(buffer), 0);
+            std::cout << msg;
+            msg = utils::readLine(cfd);
+        }
         close(cfd);
     }
 }

@@ -9,7 +9,6 @@ namespace client
 {
 void to_json(nlohmann::json& j, const utils::port_t& port);
 void to_json(nlohmann::json& j, const utils::ip_t& ip);
-void to_json(nlohmann::json& j, const Socket& socket);
 void to_json(nlohmann::json& j, const utils::counter_t& c);
-void to_json(nlohmann::json& j, const PortTraffic& pt);
+void to_json(nlohmann::json& j, const TrafficData& trafficData);
 }

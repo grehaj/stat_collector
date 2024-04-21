@@ -1,7 +1,8 @@
 #include "Utils.h"
+#include "Consts.h"
+
 #include <algorithm>
 #include <arpa/inet.h>
-#include <iomanip>
 #include <iterator>
 #include <map>
 #include <regex>
@@ -88,55 +89,4 @@ std::string port_to_str(port_t port)
     return std::to_string(port.port);
 }
 
-std::string to_string(time_t t)
-{
-    auto loct{std::localtime(&t)};
-    std::ostringstream buffer;
-    buffer << std::put_time(loct, "%c");
-
-    return buffer.str();
-}
-
-ssize_t readLine(int fd, void *buffer, size_t n)
-{
-    ssize_t numRead;
-    size_t totRead;
-    char *buf;
-    char ch;
-    if (n <= 0 || buffer == NULL)
-    {
-    return -1;
-    }
-    buf = reinterpret_cast<char*>(buffer);
-    totRead = 0;
-    while( true )
-    {
-        numRead = read(fd, &ch, 1);
-        if (numRead == -1)
-        {
-        if (errno == EINTR)
-            continue;
-        else
-            return -1;
-        } else if (numRead == 0)
-        {
-            if (totRead == 0)
-                return 0;
-            else
-                break;
-        }
-        else
-        {
-            if (totRead < n - 1)
-            {
-                totRead++;
-                *buf++ = ch;
-            }
-            if (ch == '\n')
-            break;
-        }
-    }
-    *buf = '\0';
-    return totRead;
-}
 }
