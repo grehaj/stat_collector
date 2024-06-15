@@ -5,6 +5,7 @@ project("stat_collector")
 add_definitions(-std=c++17)
 
 add_library(server STATIC
+   ${CMAKE_CURRENT_SOURCE_DIR}/ServerRunGuard.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/StatServer.cpp
 )
 

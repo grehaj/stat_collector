@@ -11,6 +11,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+//debug
+#include <iostream>
+
 namespace utils
 {
 
@@ -28,34 +31,6 @@ counter_t& counter_t::operator++()
 {
     ++counter;
     return *this;
-}
-
-std::map<std::string, std::string> get_active_interfaces_ip()
-{
-    FILE* f = popen("ip -4 addr", "r");
-    if(f == nullptr)
-        throw std::runtime_error{"SystemCommand: popen - ip addr"};
-
-    std::regex r{R"(inet\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))"};
-    std::smatch smtch;
-    std::map<std::string, std::string> active_interfaces_ip;
-    char buffer[READSIZE]{};
-
-    while (fgets(buffer, READSIZE, f))
-    {
-        std::string s{buffer};
-        if(std::regex_search(s, smtch, r))
-        {
-            auto start = s.find_last_of(" ") + 1;
-            auto ifc_name = s.substr(start);
-            if(ifc_name.back() == '\n')
-                ifc_name.erase(ifc_name.size() - 1);
-            active_interfaces_ip[ifc_name] = smtch[1];
-        }
-    }
-
-    pclose(f);
-    return active_interfaces_ip;
 }
 
 ip_t str_to_ip(const std::string& ip)
@@ -89,4 +64,39 @@ std::string port_to_str(port_t port)
     return std::to_string(port.port);
 }
 
+std::string readLine(int fd)
+{
+    ssize_t numRead{};
+    std::string result;
+    char ch{};
+
+    while( true )
+    {
+        numRead = read(fd, &ch, 1);
+        if (numRead == -1)
+        {
+            if (errno == EINTR)
+            {
+                continue;
+            }
+            else
+            {
+                throw std::runtime_error{std::string{"readLine:" } + strerror(errno)};
+            }
+        } else if (numRead == 0)
+        {
+            break;
+        }
+        else
+        {
+            result += ch;
+            if (ch == '\n')
+            {
+                break;
+            }
+        }
+    }
+
+    return result;
+}
 }

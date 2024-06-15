@@ -5,9 +5,10 @@ project("stat_collector")
 add_definitions(-std=c++17)
 
 add_library(utils STATIC
+   ${CMAKE_CURRENT_SOURCE_DIR}/Socket.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/System.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/TimePrinter.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/TimeUtils.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/SocketUtils.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/Utils.cpp
 )
 

@@ -24,13 +24,16 @@ include_directories(${GMOCK_PATH}/include ${GMOCK_PATH}/gtest/include)
 link_directories(${GMOCK_PATH}/mybuild ${GMOCK_PATH}/gtest/mybuild)
 
 add_executable(ut tests/main.cpp
+                  tests/StatClientTest.cpp
+                  tests/StatServerTest.cpp
                   tests/TimePrinterTest.cpp
                   tests/TimeUtilsTest.cpp
                   tests/TrafficStorageTest.cpp
-                  tests/SocketUtilsTest.cpp)
+                  tests/UtilsTest.cpp)
 
 target_link_libraries(ut client)
 target_link_libraries(ut utils)
+target_link_libraries(ut server)
 target_link_libraries(ut pthread)
 target_link_libraries(ut gmock)
 target_link_libraries(ut gtest)
