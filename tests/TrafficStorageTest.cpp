@@ -23,7 +23,6 @@ protected:
     }
 
     inline static const std::string interface{"eth1"};
-    inline static const std::string ip_address{"127.0.0.1"};
 
     const uint32_t source_ip = htonl(INADDR_LOOPBACK + 1);
     const uint32_t source_ip2 = htonl(INADDR_LOOPBACK + 2);
@@ -36,10 +35,9 @@ protected:
 
 TEST_F(TrafficStorageTest, givenZeroSizeStorageShouldThrowException)
 {
-    const size_t storage_size{0};
     try
     {
-        TrafficStorage sut{interface, ip_address, storage_size};
+        TrafficStorage sut{0};
         FAIL() << "Throwing exception of type runtime_error was expected!!!" << std::endl;
     }
     catch (const std::runtime_error&) {
@@ -52,7 +50,7 @@ class SingleElementTrafficStorageTest : public TrafficStorageTest
 protected:
     inline static const size_t storage_size{1};
 
-    TrafficStorage sut{interface, ip_address, storage_size};
+    TrafficStorage sut{storage_size};
 };
 
 
@@ -81,7 +79,7 @@ TEST_F(SingleElementTrafficStorageTest, When_UpdatedOnce_OutputSingleElement)
                                         "  ]\n"
                                         "}\n";
 
-    sut.update(TrafficData{0, source_ip, source_port, dest_ip, dest_port});
+    sut.update(utils::traffic_t{0, source_ip, source_port, dest_ip, dest_port});
 
     EXPECT_THAT(get_storage_output(sut), Eq(expected_output));
 }
@@ -100,8 +98,8 @@ TEST_F(SingleElementTrafficStorageTest, When_UpdatedTwice_OutputElementAddedAsLa
                                         "  ]\n"
                                         "}\n";
 
-    sut.update(TrafficData{0, source_ip, source_port, dest_ip, dest_port});
-    sut.update(TrafficData{1, source_ip, source_port, dest_ip, dest_port});
+    sut.update(utils::traffic_t{0, source_ip, source_port, dest_ip, dest_port});
+    sut.update(utils::traffic_t{1, source_ip, source_port, dest_ip, dest_port});
 
     EXPECT_THAT(get_storage_output(sut), Eq(expected_output));
 }
@@ -112,7 +110,7 @@ class MultiElementTrafficStorageTest : public TrafficStorageTest
 protected:
     inline static const size_t storage_size{2};
 
-    TrafficStorage sut{interface, ip_address, storage_size};
+    TrafficStorage sut{storage_size};
 };
 
 TEST_F(MultiElementTrafficStorageTest, When_Empty_OutputsEmptyData)
@@ -140,7 +138,7 @@ TEST_F(MultiElementTrafficStorageTest, When_UpdatedOnce_OutputSingleElement)
                                         "  ]\n"
                                         "}\n";
 
-    sut.update(TrafficData{0, source_ip, source_port, dest_ip, dest_port});
+    sut.update(utils::traffic_t{0, source_ip, source_port, dest_ip, dest_port});
 
     EXPECT_THAT(get_storage_output(sut), Eq(expected_output));
 }
@@ -166,8 +164,8 @@ TEST_F(MultiElementTrafficStorageTest, When_UpdatedTwice_OutputTwoElements)
                                         "  ]\n"
                                         "}\n";
 
-    sut.update(TrafficData{0, source_ip, source_port, dest_ip, dest_port});
-    sut.update(TrafficData{1, source_ip, source_port, dest_ip, dest_port});
+    sut.update(utils::traffic_t{0, source_ip, source_port, dest_ip, dest_port});
+    sut.update(utils::traffic_t{1, source_ip, source_port, dest_ip, dest_port});
 
     EXPECT_THAT(get_storage_output(sut), Eq(expected_output));
 }
@@ -193,9 +191,9 @@ TEST_F(MultiElementTrafficStorageTest, When_UpdatedOverTheLimit_DropsTheOldestEl
                                         "  ]\n"
                                         "}\n";
 
-    sut.update(TrafficData{0, source_ip, source_port, dest_ip, dest_port});
-    sut.update(TrafficData{1, source_ip, source_port, dest_ip, dest_port});
-    sut.update(TrafficData{2, source_ip, source_port, dest_ip, dest_port});
+    sut.update(utils::traffic_t{0, source_ip, source_port, dest_ip, dest_port});
+    sut.update(utils::traffic_t{1, source_ip, source_port, dest_ip, dest_port});
+    sut.update(utils::traffic_t{2, source_ip, source_port, dest_ip, dest_port});
 
     EXPECT_THAT(get_storage_output(sut), Eq(expected_output));
 }

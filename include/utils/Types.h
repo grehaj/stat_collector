@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <ctime>
 
 namespace utils
 {
@@ -24,4 +25,13 @@ struct counter_t
 
 using file_count_t = uint8_t;
 using storage_size_t = uint8_t;
+
+struct traffic_t
+{
+    time_t t;
+    utils::ip_t src_ip;
+    utils::port_t src_port;
+    utils::ip_t dst_ip;
+    utils::port_t dst_port;
+};
 }

@@ -40,7 +40,6 @@ public:
     const int socket_id = 112;
     const std::string ifc = "ifc";
     const std::string ip = "1.1.1.1";
-    utils::storage_size_t storage_size = 2;
     std::map<std::string, std::string> ifcs = {{ifc, ip}};
 };
 
@@ -51,7 +50,7 @@ TEST_F(StatClientTest, given_getaddrinfo_Fail_shouldThrowWhenCreated)
     EXPECT_CALL(*socketMockPtr, getaddrinfo(_, _, _, _)).WillOnce(Return(128));
 
     try {
-        StatClient{std::move(socketMock), std::move(systemMock), ifc, storage_size};
+        StatClient{std::move(socketMock), std::move(systemMock), ifc};
         FAIL();
     }  catch (const std::runtime_error&) {
         SUCCEED();
@@ -64,7 +63,7 @@ TEST_F(StatClientTest, given_interface_ip_Fail_shouldThrowWhenCreated)
     EXPECT_CALL(*systemtMockPtr, get_active_interfaces_ip()).WillOnce(Return(empty_ifcs));
 
     try {
-        StatClient{std::move(socketMock), std::move(systemMock), ifc, storage_size};
+        StatClient{std::move(socketMock), std::move(systemMock), ifc};
         FAIL();
     }  catch (const std::runtime_error&) {
         SUCCEED();
@@ -77,7 +76,7 @@ TEST_F(StatClientTest, given_getaddrinfo_ReturnsNoAddr_shouldThrowWhenCreated)
     EXPECT_CALL(*systemtMockPtr, get_active_interfaces_ip()).WillOnce(Return(ifcs));
 
     try {
-        StatClient{std::move(socketMock), std::move(systemMock), ifc, storage_size};
+        StatClient{std::move(socketMock), std::move(systemMock), ifc};
         FAIL();
     }  catch (const std::runtime_error&) {
         SUCCEED();
@@ -91,7 +90,7 @@ TEST_F(StatClientTest, given_SocketFailsAndNoOtherAddressAvailable_shouldThrowWh
     EXPECT_CALL(*socketMockPtr, socket(addrinfo_result.ai_family, addrinfo_result.ai_socktype, addrinfo_result.ai_protocol)).WillOnce(Return(-1));
 
     try {
-        StatClient{std::move(socketMock), std::move(systemMock), ifc, storage_size};
+        StatClient{std::move(socketMock), std::move(systemMock), ifc};
         FAIL();
     }  catch (const std::runtime_error&) {
         SUCCEED();
@@ -107,7 +106,7 @@ TEST_F(StatClientTest, given_ConnectFailsAndNoOtherAddressAvailable_shouldThrowW
     EXPECT_CALL(*socketMockPtr, close(socket_id));
 
     try {
-        StatClient{std::move(socketMock), std::move(systemMock), ifc, storage_size};
+        StatClient{std::move(socketMock), std::move(systemMock), ifc};
         FAIL();
     }  catch (const std::runtime_error&) {
         SUCCEED();
@@ -122,7 +121,7 @@ TEST_F(StatClientTest, given_SocketCreated_shouldFreeAddrInfo)
     EXPECT_CALL(*socketMockPtr, connect(socket_id, addrinfo_result.ai_addr, addrinfo_result.ai_addrlen)).WillOnce(Return(csuccess));
     EXPECT_CALL(*socketMockPtr, freeaddrinfo(&addrinfo_result));
 
-    StatClient{std::move(socketMock), std::move(systemMock), ifc, storage_size};
+    StatClient{std::move(socketMock), std::move(systemMock), ifc};
 }
 
 TEST_F(StatClientTest, given_SocketFailsFirstTime_shouldContinueWithNextAddress)
@@ -136,7 +135,7 @@ TEST_F(StatClientTest, given_SocketFailsFirstTime_shouldContinueWithNextAddress)
     EXPECT_CALL(*socketMockPtr, connect(socket_id, addrinfo_result.ai_addr, addrinfo_result.ai_addrlen)).WillOnce(Return(csuccess));
     EXPECT_CALL(*socketMockPtr, freeaddrinfo(&multi_addrinfo_result));
 
-    StatClient{std::move(socketMock), std::move(systemMock), ifc, storage_size};
+    StatClient{std::move(socketMock), std::move(systemMock), ifc};
 }
 
 TEST_F(StatClientTest, given_ConnectFailsFirstTime_shouldContinueWithNextAddress)
@@ -152,7 +151,7 @@ TEST_F(StatClientTest, given_ConnectFailsFirstTime_shouldContinueWithNextAddress
     EXPECT_CALL(*socketMockPtr, connect(socket_id, addrinfo_result.ai_addr, addrinfo_result.ai_addrlen)).WillOnce(Return(csuccess));
     EXPECT_CALL(*socketMockPtr, freeaddrinfo(&multi_addrinfo_result));
 
-    StatClient{std::move(socketMock), std::move(systemMock), ifc, storage_size};
+    StatClient{std::move(socketMock), std::move(systemMock), ifc};
 }
 
 MATCHER_P(HasWritten, written_str, "")
@@ -186,7 +185,7 @@ public:
 
 TEST_F(StatClientRunTest, given_PopenReurnsNull_ShouldThrow)
 {
-    sut = std::make_unique<StatClient>(std::move(socketMock), std::move(systemMock), ifc, storage_size);
+    sut = std::make_unique<StatClient>(std::move(socketMock), std::move(systemMock), ifc);
     EXPECT_CALL(*systemtMockPtr, popen(_, _)).WillOnce(Return(static_cast<FILE*>(0)));
 
     EXPECT_THROW(sut->run(), std::runtime_error);
@@ -197,8 +196,7 @@ class SingleElementStatClientRunTest : public StatClientRunTest
 public:
     SingleElementStatClientRunTest()
     {
-        utils::storage_size_t storage_size = 1;
-        sut = std::make_unique<StatClient>(std::move(socketMock), std::move(systemMock), ifc, storage_size);
+        sut = std::make_unique<StatClient>(std::move(socketMock), std::move(systemMock), ifc);
     }
 };
 
@@ -229,8 +227,7 @@ class MultiElementStatClientRunTest : public StatClientRunTest
 public:
     MultiElementStatClientRunTest()
     {
-        utils::storage_size_t storage_size = 2;
-        sut = std::make_unique<StatClient>(std::move(socketMock), std::move(systemMock), ifc, storage_size);
+        sut = std::make_unique<StatClient>(std::move(socketMock), std::move(systemMock), ifc);
     }
 };
 

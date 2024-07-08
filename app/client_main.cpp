@@ -7,9 +7,12 @@
 
 using namespace std;
 
-int main(int argv, char* argc[]) try
+int main(int argc, char* argv[]) try
 {
-    client::StatClient client{std::make_unique<utils::Socket>(), std::make_unique<utils::System>(), "wlp2s0", 1};
+	if(argc != 2)
+		throw std::runtime_error{"Usage: stat_client ifc_name"};
+
+    client::StatClient client{std::make_unique<utils::Socket>(), std::make_unique<utils::System>(), argv[1]};
     client.run();
     std::exit(EXIT_SUCCESS);
 }

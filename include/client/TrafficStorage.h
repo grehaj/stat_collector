@@ -1,30 +1,29 @@
 #pragma once
 
-#include "TrafficData.h"
+#include "Types.h"
 
 #include <list>
+#include <string>
 
 namespace client
 {
 class TrafficStorage
 {
 public:
-    using traffic_t = std::list<TrafficData>;
-    using size_type = traffic_t::size_type;
+    using storage_t = std::list<utils::traffic_t>;
+    using size_type = storage_t::size_type;
 
-    TrafficStorage(const std::string& ifc, const std::string& ip, size_type s);
+    TrafficStorage(size_type s);
 
-    void update(const TrafficData& data);
+    void update(const utils::traffic_t& data);
     size_type size() const;
     void clear();
     friend std::ostream& operator<<(std::ostream& out, const TrafficStorage& ts);
 
 private:
-    const std::string interface;
-    const std::string ip_addr;
-    const size_type max_secs;
+    const size_type max_size;
 
-    std::list<TrafficData> traffic;
+    storage_t  traffic_storage;
 };
 
 }

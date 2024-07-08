@@ -5,6 +5,7 @@ project("stat_collector")
 add_definitions(-std=c++17)
 
 add_library(utils STATIC
+   ${CMAKE_CURRENT_SOURCE_DIR}/JsonConversion.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/Socket.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/System.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/TimePrinter.cpp

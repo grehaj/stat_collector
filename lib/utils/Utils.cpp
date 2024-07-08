@@ -61,7 +61,7 @@ port_t str_to_port(const std::string& port)
 }
 std::string port_to_str(port_t port)
 {
-    return std::to_string(port.port);
+    return std::to_string(ntohs(port.port));
 }
 
 std::string readLine(int fd)

@@ -1,7 +1,14 @@
 #include "StatClient.h"
 #include "Consts.h"
+#include "CaptureLib.h"
+#include "TrafficStorage.h"
 #include "Utils.h"
-#include <regex>
+
+#include <iostream>
+#include <sstream>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -9,13 +16,14 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <cerrno>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 namespace client
 {
 
-StatClient::StatClient(std::unique_ptr<utils::ISocket> socInit, std::unique_ptr<utils::ISystem> sys, const std::string& ifc, utils::storage_size_t storage_size):
-    soc{std::move(socInit)}, system{std::move(sys)}, interface{ifc}, ip{get_interface_ip(ifc)}, storage_size{storage_size}, traffic_storage{interface, ip, storage_size}
+StatClient::StatClient(std::unique_ptr<utils::ISocket> socInit, std::unique_ptr<utils::ISystem> sys, const std::string& dev):
+    soc{std::move(socInit)}, system{std::move(sys)}, device{dev}
 {
     addrinfo hints{};
     addrinfo *result{};
@@ -55,64 +63,53 @@ StatClient::StatClient(std::unique_ptr<utils::ISocket> socInit, std::unique_ptr<
 
 void StatClient::run()
 {
-    const std::string tcp_dump_command = std::string{"tcpdump -n -tt -i "} + "wlp2s0" + " dst " + ip;
-    using del_t = decltype (utils::fifo_deleter<FILE>());
-    auto f = std::unique_ptr<FILE, del_t>(system->popen(tcp_dump_command.c_str(), "r"), del_t{});
-    if(f == nullptr)
-        throw std::runtime_error{"SystemCommand: popen - tcpdump"};
-
-    const std::regex r{R"((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\.(\d+)\s>\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\.(\d+))"};
-    std::smatch sm;
-    char buffer[utils::READSIZE]{};
-    utils::file_count_t file_num = 1;
-    while (fgets(buffer, utils::READSIZE, f.get()))
+    SynchronizationData sd{};
+    auto traffic_producer =  [&]()
     {
-        std::string s{buffer};
-        if(std::regex_search(s, sm, r))
+        auto handle = open_live(device);
+        pcap_loop(handle, 0, packet_handler, reinterpret_cast<u_char *>(&sd));
+    };
+
+    auto traffic_consumer =  [&]()
+    {
+    	TrafficStorage& ts = sd.traffic_storage;
+    	std::mutex& mtx = sd.storage_mutex;
+    	std::condition_variable& go_produce = sd.produce;
+    	std::condition_variable& go_consume = sd.consume;
+        while(true)
         {
-            auto end_pos = s.find(".");
-            time_t ts = std::stoull(s.substr(0, end_pos));
-            auto d = TrafficData{ts, utils::str_to_ip(sm[1]), utils::str_to_port(sm[2]), utils::str_to_ip(sm[3]), utils::str_to_port(sm[4])};
-            traffic_storage.update(d);
-
-            if(traffic_storage.size() == storage_size)
+            std::unique_lock<std::mutex> ul{mtx};
+            go_consume.wait(ul, [&]{return ts.size() == utils::storage_size;});
+            std::stringstream out{};
+            out << ts;
+            std::string line;
+            while(std::getline(out, line))
             {
-                std::stringstream out{};
-                out << traffic_storage;
-                std::string line;
-                while(std::getline(out, line))
+                ssize_t msg_size = line.length();
+                if(msg_size > utils::READSIZE)
                 {
-                    auto msg_size = line.length();
-                    if(msg_size > utils::READSIZE)
-                    {
-                        line = "error";
-                        msg_size = line.length();
-                    }
-                    if(soc->write(writer_socket, const_cast<char*>(line.c_str()), msg_size) != msg_size)
-                    {
-                        throw std::runtime_error{std::string("writer - write data: ") + strerror(errno)};
-                    }
-                    if (soc->write(writer_socket, const_cast<char*>("\n"), 1) != 1)
-                    {
-                        throw std::runtime_error{std::string("writer - write new line: ") + strerror(errno)};
-                    }
+                    line = "error";
+                    msg_size = line.length();
                 }
-                traffic_storage.clear();
-                ++file_num;
+                if(soc->write(writer_socket, const_cast<char*>(line.c_str()), msg_size) != msg_size)
+                {
+                    throw std::runtime_error{std::string("writer - write data: ") + strerror(errno)};
+                }
+                if (soc->write(writer_socket, const_cast<char*>("\n"), 1) != 1)
+                {
+                    throw std::runtime_error{std::string("writer - write new line: ") + strerror(errno)};
+                }
             }
+            ts.clear();
+            go_produce.notify_one();
         }
-    }
+    };
 
+    std::thread producer_thread{traffic_producer};
+    std::thread consumer_thread{traffic_consumer};
+    producer_thread.join();
+    consumer_thread.join();
     //TODO flush the buffer
-}
-
-std::string StatClient::get_interface_ip(const std::string& ifc) const
-{
-    auto ifcs{system->get_active_interfaces_ip()};
-    if(ifcs.find(ifc) == ifcs.end())
-        throw std::runtime_error{"Unable to find interface '" + ifc + "'."};
-
-    return ifcs[ifc];
 }
 
 }
