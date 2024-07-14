@@ -1,4 +1,7 @@
-#include "CaptureLib.h"
+#include "Capture.h"
+
+#include "capture/AllDevs.h"
+#include "capture/SynchronizationData.h"
 
 #include <stdexcept>
 
@@ -7,23 +10,47 @@
 
 namespace client
 {
-pcap_t* open_live(std::string_view device)
+
+Capture::Capture(std::string_view device)
 {
     const int packet_count_limit = 1;
     const int timeout_limit = 10000;
     char error_buffer[PCAP_ERRBUF_SIZE];
     const auto ifc = get_pcap_if(device);
 
-    pcap_t* handle = pcap_open_live(ifc.device.c_str(), BUFSIZ, packet_count_limit, timeout_limit, error_buffer);
+    handle = pcap_open_live(ifc.device.c_str(), BUFSIZ, packet_count_limit, timeout_limit, error_buffer);
+
+    for(const auto& add : ifc.addresses)
+    {
+    	const std::string filter_exp = std::string{"dst "} + add.network_address;
+    	bpf_program filter;
+    	if(pcap_compile(handle, &filter, filter_exp.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1)
+    	{
+    		throw std::runtime_error{filter_exp + " cannot be compiled"};
+    	}
+    	if(pcap_setfilter(handle, &filter))
+        {
+        	throw std::runtime_error{filter_exp + " cannot be set"};
+        }
+    }
+
     if(handle == nullptr)
     {
         throw std::runtime_error{error_buffer};
     }
-
-    return handle;
 }
 
-hpcap_addr_t pcap_addr_to_h(const pcap_addr_t* addr)
+Capture::~Capture()
+{
+	pcap_close(handle);
+}
+
+void Capture::run(u_char * arg) const
+{
+    pcap_loop(handle, 0, packet_handler, arg);
+}
+
+hpcap_addr_t Capture::pcap_addr_to_h(const pcap_addr_t* addr)
 {
     hpcap_addr_t result{};
     for(auto a = addr; a != NULL; a = a->next)
@@ -37,74 +64,15 @@ hpcap_addr_t pcap_addr_to_h(const pcap_addr_t* addr)
                 break;
             default:
                 break;
-//                std::cerr <<"ptoh not supported type: " + std::to_string(address->sa_family) << std::endl;
         }
     }
     return result;
 }
 
-class AllDevs
+
+hpcap_if_t Capture::get_pcap_if(std::string_view dev)
 {
-public:
-	AllDevs()
-	{
-	    char errbuf[PCAP_ERRBUF_SIZE];
-	    const auto pcap_findalldevs_output = pcap_findalldevs(&alldevsp, errbuf);
-	    if(pcap_findalldevs_output == PCAP_ERROR)
-	        throw std::runtime_error{errbuf};
-	}
-
-	AllDevs(const AllDevs&) = delete;
-	AllDevs& operator=(const AllDevs&) = delete;
-	// TODO define if needed
-	AllDevs(AllDevs&&) = delete;
-	AllDevs& operator=(AllDevs&&) = delete;
-
-	class iterator
-	{
-	public:
-		explicit iterator(pcap_if_t *d): dev{d}
-		{
-		}
-
-		iterator& operator++()
-		{
-			dev = dev->next;
-			return *this;
-		}
-
-		const pcap_if_t& operator*()
-		{
-			return *dev;
-		}
-
-		bool operator!=(const iterator& rhs) const
-		{
-			return dev != rhs.dev;
-		}
-		bool operator==(const iterator& rhs) const
-		{
-			return dev == rhs.dev;
-		}
-	private:
-		pcap_if_t *dev{};
-	};
-	iterator begin() {return iterator{alldevsp};};
-	iterator end() {return iterator{nullptr};};
-
-
-	~AllDevs()
-	{
-	    pcap_freealldevs(alldevsp);
-	}
-
-private:
-	pcap_if_t *alldevsp{};
-};
-
-hpcap_if_t get_pcap_if(std::string_view dev)
-{
-	AllDevs allDevs;
+	capture::AllDevs allDevs;
 	hpcap_if_t result{};
 	for(auto d : allDevs)
 	{
@@ -124,7 +92,7 @@ hpcap_if_t get_pcap_if(std::string_view dev)
     throw std::runtime_error{std::string{dev} + " not found"};
 }
 
-std::string af_inte_to_h(const in_addr& add)
+std::string Capture::af_inte_to_h(const in_addr& add)
 {
     char ip[INET_ADDRSTRLEN]{};
     if (inet_ntop(AF_INET, &add.s_addr, ip, INET_ADDRSTRLEN) == nullptr)
@@ -135,9 +103,9 @@ std::string af_inte_to_h(const in_addr& add)
     return ip;
 }
 
-void packet_handler(u_char *args, const pcap_pkthdr *header, const u_char *packet)
+void Capture::packet_handler(u_char *args, const pcap_pkthdr *header, const u_char *packet)
 {
-	SynchronizationData* sd = reinterpret_cast<SynchronizationData*>(args);
+	capture::SynchronizationData* sd = reinterpret_cast<capture::SynchronizationData*>(args);
 	TrafficStorage& ts = sd->traffic_storage;
 	std::mutex& mtx = sd->storage_mutex;
 	std::condition_variable& go_produce = sd->produce;
@@ -155,7 +123,7 @@ void packet_handler(u_char *args, const pcap_pkthdr *header, const u_char *packe
 	int ip_header_length = ((*ip_header) & 0x0F) * 4;
 
 	u_char protocol = *(ip_header + 9);
-	if (protocol != IPPROTO_TCP)
+	if (protocol != IPPROTO_TCP and protocol != IPPROTO_UDP)
 	{
 		return;
 	}

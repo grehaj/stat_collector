@@ -1,6 +1,7 @@
 #include "StatClient.h"
 #include "Consts.h"
-#include "CaptureLib.h"
+#include "Capture.h"
+#include "SynchronizationData.h"
 #include "TrafficStorage.h"
 #include "Utils.h"
 
@@ -63,11 +64,11 @@ StatClient::StatClient(std::unique_ptr<utils::ISocket> socInit, std::unique_ptr<
 
 void StatClient::run()
 {
-    SynchronizationData sd{};
+    capture::SynchronizationData sd{};
     auto traffic_producer =  [&]()
     {
-        auto handle = open_live(device);
-        pcap_loop(handle, 0, packet_handler, reinterpret_cast<u_char *>(&sd));
+        client::Capture c{device};
+        c.run(reinterpret_cast<u_char *>(&sd));
     };
 
     auto traffic_consumer =  [&]()
